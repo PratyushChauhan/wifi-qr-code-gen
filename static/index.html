@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi QR Code Generator</title>
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+</head>
+
+<body>
+    <h1>Wi-Fi QR Code Generator</h1>
+
+    <form hx-get="/generate" hx-target="#qr-code" hx-swap="outerHTML">
+        <label for="ssid">Wi-Fi SSID:</label>
+        <input type="text" id="ssid" name="ssid" required>
+        <br>
+
+        <label for="password">Wi-Fi Password:</label>
+        <input type="password" id="password" name="password" required>
+        <br>
+
+        <label for="encryption">Encryption Type:</label>
+        <select id="encryption" name="encryption">
+            <option value="WPA">WPA</option>
+            <option value="WEP">WEP</option>
+            <option value="">None</option>
+        </select>
+        <br><br>
+
+        <button type="submit">Generate Wi-Fi QR Code</button>
+    </form>
+
+    <div id="qr-code">
+        <!-- QR code will be displayed here -->
+    </div>
+</body>
+
+</html>
