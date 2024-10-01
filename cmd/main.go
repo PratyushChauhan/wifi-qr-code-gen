@@ -2,20 +2,23 @@ package main
 
 import (
 	"fmt"
-	"html/template"
-	"net/http"
-
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/skip2/go-qrcode"
+	"html/template"
+	"io"
 )
+
+func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
 
 type Templates struct {
 	templates *template.Template
 }
 
 func newtemplate() *Templates {
-	return &Templates{templates: template.Must(template.ParseGlob("views/*.html"))}
+	return &Templates{templates: template.Must(template.ParseGlob("static/*.html"))}
 }
 
 func generateQRCode(ssid string, password string) ([]byte, error) {
@@ -45,7 +48,7 @@ type Page struct {
 }
 
 func newData(ssid string, password string, qr []byte) Data {
-	return Data{ssid: "", password: "", qr: qr}
+	return Data{ssid: ssid, password: password, qr: qr}
 }
 
 func newPage() Page {
