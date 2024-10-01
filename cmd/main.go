@@ -37,18 +37,19 @@ type FormData struct {
 type Data struct {
 	ssid     string
 	password string
+	qr       []byte
 }
 
 type Page struct {
 	Data Data
 }
 
-func newData() Data {
-	return Data{ssid: "", password: ""}
+func newData(ssid string, password string, qr []byte) Data {
+	return Data{ssid: "", password: "", qr: qr}
 }
 
 func newPage() Page {
-	return Page{Data: newData()}
+	return Page{Data: newData("", "", nil)}
 }
 
 func main() {
@@ -64,18 +65,15 @@ func main() {
 	e.POST("/qr", func(c echo.Context) error {
 		ssid := c.FormValue("ssid")
 		password := c.FormValue("password")
-		generateQRCode(ssid, password)
-		if page.Data.hasEmail(email) {
-			formData := newFormData()
-			formData.Values["name"] = name
-			formData.Values["email"] = email
-			formData.Errors["email"] = "This email already exists"
-			return c.Render(422, "form", formData)
+		qr, err := generateQRCode(ssid, password)
+		if err != nil {
+			return c.String(404, "Invalid id")
 		}
-		contact := newContact(name, email)
-		page.Data.Contacts = append(page.Data.Contacts, contact)
-		c.Render(200, "form", page.Form)
-		return c.Render(200, "oob-contact", contact)
+
+		data := newData(ssid, password, qr)
+		page.Data = data
+		c.Render(200, "qrData", page.Data)
+		return c.Render(200, "oob-contact", data)
 	})
 
 	e.Logger.Fatal(e.Start(":42069"))
