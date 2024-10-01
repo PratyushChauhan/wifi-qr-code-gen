@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"html/template"
+	"image/color"
+	"io"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/skip2/go-qrcode"
-	"html/template"
-	"io"
 )
 
 func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
@@ -21,38 +23,34 @@ func newtemplate() *Templates {
 	return &Templates{templates: template.Must(template.ParseGlob("static/*.html"))}
 }
 
-func generateQRCode(ssid string, password string) ([]byte, error) {
+func generateQRCode(ssid string, password string) error {
 	encryption := "WPA2"
 
 	// Generate the Wi-Fi QR code string
 	wifiString := fmt.Sprintf("WIFI:T:%s;S:%s;P:%s;;", encryption, ssid, password)
 
 	// Generate QR Code
-	qr, err := qrcode.Encode(wifiString, qrcode.Medium, 256)
-	return qr, err
+	err := qrcode.WriteColorFile(wifiString, qrcode.Medium, 256, color.Black, color.White, "./static/qr.png")
+	return err
 
 }
 
-type FormData struct {
-	data Data
-	//	Errors map[string]string
-}
 type Data struct {
-	ssid     string
-	password string
-	qr       []byte
+	SSID     string
+	Password string
+	Qr       string
 }
 
 type Page struct {
 	Data Data
 }
 
-func newData(ssid string, password string, qr []byte) Data {
-	return Data{ssid: ssid, password: password, qr: qr}
+func newData(ssid string, password string, qr string) Data {
+	return Data{SSID: ssid, Password: password, Qr: qr}
 }
 
 func newPage() Page {
-	return Page{Data: newData("", "", nil)}
+	return Page{Data: newData("", "", "")}
 }
 
 func main() {
@@ -66,17 +64,17 @@ func main() {
 		return c.Render(200, "index", page)
 	})
 	e.POST("/qr", func(c echo.Context) error {
+		path := "./qr.png"
 		ssid := c.FormValue("ssid")
 		password := c.FormValue("password")
-		qr, err := generateQRCode(ssid, password)
+		err := generateQRCode(ssid, password)
 		if err != nil {
 			return c.String(404, "Invalid id")
 		}
 
-		data := newData(ssid, password, qr)
+		data := newData(ssid, password, path)
 		page.Data = data
-		c.Render(200, "qrData", page.Data)
-		return c.Render(200, "oob-contact", data)
+		return c.Render(200, "data", page.Data)
 	})
 
 	e.Logger.Fatal(e.Start(":42069"))
